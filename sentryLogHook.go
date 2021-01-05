@@ -13,28 +13,34 @@ limitations under the License.
 package sentrylogrushook
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 type SentryLogHook struct {
-	// logLevels to fire message to sentry
+	// logLevels to fire in sentry
 	logLevels []log.Level
 }
 
-func NewHook(sentryDSN string, release string, logLevels []log.Level) {
+func NewHook(sentryDSN string, release string, logLevels []log.Level) (*SentryLogHook, error) {
+	hook := SentryLogHook{}
+
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:     sentryDSN,
 		Release: release,
 	})
 	if err != nil {
-		log.WithError(err).Fatal()
+		return nil, errors.Wrap(err, "Sentry init failed")
 	}
 
-	if logLevels != nil {
-		logLevels = []log.Level{
+	hook.logLevels = logLevels
+
+	if hook.logLevels == nil {
+		hook.logLevels = []log.Level{
 			log.ErrorLevel,
 			log.FatalLevel,
 			log.WarnLevel,
@@ -42,15 +48,14 @@ func NewHook(sentryDSN string, release string, logLevels []log.Level) {
 		}
 	}
 
-	log.AddHook(&SentryLogHook{
-		logLevels: logLevels,
-	})
+	return &hook, nil
 }
 
 func (slh *SentryLogHook) Levels() []log.Level {
 	return slh.logLevels
 }
 
+//nolint:funlen
 func (slh *SentryLogHook) Fire(entry *log.Entry) error {
 	sentryLevel := sentry.LevelInfo
 
@@ -74,11 +79,19 @@ func (slh *SentryLogHook) Fire(entry *log.Entry) error {
 	localHub := sentry.CurrentHub().Clone()
 	localHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetLevel(sentryLevel)
+
+		if entry.HasCaller() {
+			scope.SetExtra("Caller", entry.Caller)
+		}
+
 		for key, value := range entry.Data {
-			if key == log.ErrorKey {
+			switch key {
+			case log.ErrorKey:
 				// localHub.CaptureException don't save in sentry message
 				scope.SetExtra("Message", entry.Message)
-			} else {
+			case "request":
+				scope.SetRequest(value.(*http.Request))
+			default:
 				scope.SetExtra(key, value)
 			}
 		}

@@ -15,9 +15,7 @@ package sentrylogrushook
 import (
 	"errors"
 	"testing"
-	"time"
 
-	"github.com/getsentry/sentry-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,7 +24,7 @@ var ErrTest error = errors.New("test error")
 func TestHook(t *testing.T) {
 	t.Parallel()
 
-	hook, err := NewHook("", "test-version", nil)
+	hook, err := NewHook(SentryLogHookOptions{Release: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,6 +35,5 @@ func TestHook(t *testing.T) {
 	log.WithError(ErrTest).Warn("test warn")
 	log.WithError(ErrTest).Error("test error")
 
-	sentry.Flush(1 * time.Second)
-	sentry.Recover()
+	hook.Stop()
 }

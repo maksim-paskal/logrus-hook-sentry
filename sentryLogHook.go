@@ -26,18 +26,27 @@ type SentryLogHook struct {
 	logLevels []log.Level
 }
 
-func NewHook(sentryDSN string, release string, logLevels []log.Level) (*SentryLogHook, error) {
+type SentryLogHookOptions struct {
+	SentryDSN string
+	Release   string
+	LogLevels []log.Level
+}
+
+const RequestKey = "request"
+
+// create new SentryLogHook
+func NewHook(options SentryLogHookOptions) (*SentryLogHook, error) {
 	hook := SentryLogHook{}
 
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:     sentryDSN,
-		Release: release,
+		Dsn:     options.SentryDSN,
+		Release: options.Release,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "Sentry init failed")
 	}
 
-	hook.logLevels = logLevels
+	hook.logLevels = options.LogLevels
 
 	if hook.logLevels == nil {
 		hook.logLevels = []log.Level{
@@ -51,11 +60,19 @@ func NewHook(sentryDSN string, release string, logLevels []log.Level) (*SentryLo
 	return &hook, nil
 }
 
+// Graceful stop.
+func (slh *SentryLogHook) Stop() {
+	sentry.Flush(time.Second)
+	sentry.Recover()
+}
+
+// func log.Hook.Levels.
 func (slh *SentryLogHook) Levels() []log.Level {
 	return slh.logLevels
 }
 
 //nolint:funlen
+// func log.Hook.Fire.
 func (slh *SentryLogHook) Fire(entry *log.Entry) error {
 	sentryLevel := sentry.LevelInfo
 
@@ -89,7 +106,7 @@ func (slh *SentryLogHook) Fire(entry *log.Entry) error {
 			case log.ErrorKey:
 				// localHub.CaptureException don't save in sentry message
 				scope.SetExtra("Message", entry.Message)
-			case "request":
+			case RequestKey:
 				scope.SetRequest(value.(*http.Request))
 			default:
 				scope.SetExtra(key, value)

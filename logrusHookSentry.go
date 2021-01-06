@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package sentrylogrushook
+package logrushooksentry
 
 import (
 	"net/http"
@@ -33,7 +33,7 @@ type Options struct {
 
 const RequestKey = "request"
 
-// create new SentryLogHook.
+// create new Hook.
 func NewHook(options Options) (*Hook, error) {
 	hook := Hook{}
 
@@ -59,19 +59,19 @@ func NewHook(options Options) (*Hook, error) {
 	return &hook, nil
 }
 
-// Graceful stop.
+// Graceful stop sentry.
 func (hook *Hook) Stop() {
 	sentry.Flush(time.Second)
 	sentry.Recover()
 }
 
-// func log.Hook.Levels.
+// func to interface log.Hook.Levels.
 func (hook *Hook) Levels() []log.Level {
 	return hook.logLevels
 }
 
 //nolint:funlen
-// func log.Hook.Fire.
+// func to interface log.Hook.Fire.
 func (hook *Hook) Fire(entry *log.Entry) error {
 	sentryLevel := sentry.LevelInfo
 

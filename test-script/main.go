@@ -15,14 +15,14 @@ package main
 import (
 	"errors"
 
-	sentrylogrushook "github.com/maksim-paskal/logrus-hook-sentry"
+	logrushooksentry "github.com/maksim-paskal/logrus-hook-sentry"
 	log "github.com/sirupsen/logrus"
 )
 
 var ErrTest error = errors.New("test error")
 
 func main() {
-	hook, err := sentrylogrushook.NewHook(sentrylogrushook.Options{
+	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{
 		Release: "test",
 	})
 	if err != nil {

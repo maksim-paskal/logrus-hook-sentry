@@ -24,7 +24,7 @@ var ErrTest error = errors.New("test error")
 func TestHook(t *testing.T) {
 	t.Parallel()
 
-	hook, err := NewHook(SentryLogHookOptions{Release: "test"})
+	hook, err := NewHook(Options{Release: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,8 +32,8 @@ func TestHook(t *testing.T) {
 	log.AddHook(hook)
 
 	log.Info("test info")
-	log.WithError(ErrTest).Warn("test warn")
-	log.WithError(ErrTest).Error("test error")
+	log.Warn(ErrTest)
+	log.WithError(ErrTest).Error("some message")
 
 	hook.Stop()
 }

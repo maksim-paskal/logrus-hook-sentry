@@ -21,12 +21,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type SentryLogHook struct {
-	// logLevels to fire in sentry
+type Hook struct {
 	logLevels []log.Level
 }
 
-type SentryLogHookOptions struct {
+type Options struct {
 	SentryDSN string
 	Release   string
 	LogLevels []log.Level
@@ -34,9 +33,9 @@ type SentryLogHookOptions struct {
 
 const RequestKey = "request"
 
-// create new SentryLogHook
-func NewHook(options SentryLogHookOptions) (*SentryLogHook, error) {
-	hook := SentryLogHook{}
+// create new SentryLogHook.
+func NewHook(options Options) (*Hook, error) {
+	hook := Hook{}
 
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:     options.SentryDSN,
@@ -61,19 +60,19 @@ func NewHook(options SentryLogHookOptions) (*SentryLogHook, error) {
 }
 
 // Graceful stop.
-func (slh *SentryLogHook) Stop() {
+func (hook *Hook) Stop() {
 	sentry.Flush(time.Second)
 	sentry.Recover()
 }
 
 // func log.Hook.Levels.
-func (slh *SentryLogHook) Levels() []log.Level {
-	return slh.logLevels
+func (hook *Hook) Levels() []log.Level {
+	return hook.logLevels
 }
 
 //nolint:funlen
 // func log.Hook.Fire.
-func (slh *SentryLogHook) Fire(entry *log.Entry) error {
+func (hook *Hook) Fire(entry *log.Entry) error {
 	sentryLevel := sentry.LevelInfo
 
 	switch entry.Level {

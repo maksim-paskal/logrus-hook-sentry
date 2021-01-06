@@ -1,4 +1,4 @@
-module github.com/maksim-paskal/sentry-logrus-hook
+module github.com/maksim-paskal/logrus-hook-sentry
 
 go 1.15
 

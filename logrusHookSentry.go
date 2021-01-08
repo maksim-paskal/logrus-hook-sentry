@@ -47,6 +47,7 @@ func NewHook(options Options) (*Hook, error) {
 
 	hook.logLevels = options.LogLevels
 
+	// use errors levels for default
 	if hook.logLevels == nil {
 		hook.logLevels = []log.Level{
 			log.ErrorLevel,
@@ -70,7 +71,6 @@ func (hook *Hook) Levels() []log.Level {
 	return hook.logLevels
 }
 
-//nolint:funlen
 // func to interface log.Hook.Fire.
 func (hook *Hook) Fire(entry *log.Entry) error {
 	sentryLevel := sentry.LevelInfo
@@ -104,7 +104,9 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 			switch key {
 			case log.ErrorKey:
 				// localHub.CaptureException don't save in sentry message
-				scope.SetExtra("Message", entry.Message)
+				if len(entry.Message) > 0 {
+					scope.SetExtra("Message", entry.Message)
+				}
 			case RequestKey:
 				scope.SetRequest(value.(*http.Request))
 			default:

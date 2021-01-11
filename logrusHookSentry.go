@@ -22,6 +22,7 @@ import (
 )
 
 type Hook struct {
+	options   Options
 	logLevels []log.Level
 }
 
@@ -29,13 +30,22 @@ type Options struct {
 	SentryDSN string
 	Release   string
 	LogLevels []log.Level
+	Tags      map[string]string
+	// default: 1s
+	FlushDuration time.Duration
 }
 
 const RequestKey = "request"
 
 // create new Hook.
 func NewHook(options Options) (*Hook, error) {
-	hook := Hook{}
+	hook := Hook{
+		options: options,
+	}
+
+	if hook.options.FlushDuration == 0 {
+		hook.options.FlushDuration = time.Second
+	}
 
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:     options.SentryDSN,
@@ -43,6 +53,12 @@ func NewHook(options Options) (*Hook, error) {
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "Sentry init failed")
+	}
+
+	if options.Tags != nil {
+		sentry.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTags(options.Tags)
+		})
 	}
 
 	hook.logLevels = options.LogLevels
@@ -62,8 +78,9 @@ func NewHook(options Options) (*Hook, error) {
 
 // Graceful stop sentry.
 func (hook *Hook) Stop() {
-	sentry.Flush(time.Second)
+	sentry.Flush(hook.options.FlushDuration)
 	sentry.Recover()
+	time.Sleep(hook.options.FlushDuration)
 }
 
 // func to interface log.Hook.Levels.

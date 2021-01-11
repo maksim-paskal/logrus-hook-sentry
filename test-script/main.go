@@ -29,11 +29,11 @@ func main() {
 		log.WithError(err).Fatal()
 	}
 
+	defer hook.Stop()
+
 	log.AddHook(hook)
 
 	log.Info("test info")
 	log.Warn(ErrTest)
 	log.WithError(ErrTest).Error("some message")
-
-	defer hook.Stop()
 }

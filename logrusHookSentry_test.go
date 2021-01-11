@@ -24,16 +24,23 @@ var ErrTest error = errors.New("test error")
 func TestHook(t *testing.T) {
 	t.Parallel()
 
-	hook, err := NewHook(Options{Release: "test"})
+	mapTags := make(map[string]string)
+
+	mapTags["test"] = "value"
+
+	hook, err := NewHook(Options{
+		Release: "test",
+		Tags:    mapTags,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	defer hook.Stop()
 
 	log.AddHook(hook)
 
 	log.Info("test info")
 	log.Warn(ErrTest)
 	log.WithError(ErrTest).Error("some message")
-
-	hook.Stop()
 }

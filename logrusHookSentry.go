@@ -139,7 +139,7 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 	}
 
 	if entry.Level <= log.FatalLevel {
-		sentry.Flush(time.Second)
+		hook.Stop()
 	}
 
 	return nil

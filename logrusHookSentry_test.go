@@ -13,7 +13,10 @@ limitations under the License.
 package logrushooksentry
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
@@ -43,4 +46,21 @@ func TestHook(t *testing.T) {
 	log.Info("test info")
 	log.Warn(ErrTest)
 	log.WithError(ErrTest).Error("some message")
+}
+
+func TestRequestJson(t *testing.T) {
+	t.Parallel()
+
+	log.SetFormatter(&log.JSONFormatter{})
+
+	req, _ := http.NewRequestWithContext(context.TODO(), "POST", "http://127.0.0.1?test=value", nil)
+	req.Header.Add("key", "value")
+
+	logResult := convertRequest(req)
+
+	if _, err := json.Marshal(logResult); err != nil {
+		t.Fatal(err)
+	}
+
+	log.WithFields(AddRequest(req)).Info("ss")
 }

@@ -14,6 +14,7 @@ package logrushooksentry
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -35,7 +36,7 @@ type Options struct {
 	FlushDuration time.Duration
 }
 
-const RequestKey = "request"
+const requestKey = "request"
 
 // create new Hook.
 func NewHook(options Options) (*Hook, error) {
@@ -124,8 +125,6 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 				if len(entry.Message) > 0 {
 					scope.SetExtra("Message", entry.Message)
 				}
-			case RequestKey:
-				scope.SetRequest(value.(*http.Request))
 			default:
 				scope.SetExtra(key, value)
 			}
@@ -143,4 +142,30 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 	}
 
 	return nil
+}
+
+type addRequestType struct {
+	URL        *url.URL
+	Method     string
+	Header     http.Header
+	RemoteAddr string
+	RequestURI string
+	Host       string
+}
+
+func convertRequest(req *http.Request) addRequestType {
+	return addRequestType{
+		URL:        req.URL,
+		Method:     req.Method,
+		Header:     req.Header,
+		RemoteAddr: req.RemoteAddr,
+		RequestURI: req.RequestURI,
+		Host:       req.Host,
+	}
+}
+
+func AddRequest(req *http.Request) log.Fields {
+	return log.Fields{
+		requestKey: convertRequest(req),
+	}
 }

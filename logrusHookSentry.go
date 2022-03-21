@@ -14,7 +14,6 @@ package logrushooksentry
 
 import (
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -28,15 +27,12 @@ type Hook struct {
 }
 
 type Options struct {
-	SentryDSN string
-	Release   string
-	LogLevels []log.Level
-	Tags      map[string]string
-	// default: 1s
+	SentryDSN     string
+	Release       string
+	LogLevels     []log.Level
+	Tags          map[string]string
 	FlushDuration time.Duration
 }
-
-const requestKey = "request"
 
 // create new Hook.
 func NewHook(options Options) (*Hook, error) {
@@ -90,7 +86,7 @@ func (hook *Hook) Levels() []log.Level {
 }
 
 // func to interface log.Hook.Fire.
-func (hook *Hook) Fire(entry *log.Entry) error {
+func (hook *Hook) Fire(entry *log.Entry) error { //nolint: cyclop
 	sentryLevel := sentry.LevelInfo
 
 	switch entry.Level {
@@ -144,28 +140,20 @@ func (hook *Hook) Fire(entry *log.Entry) error {
 	return nil
 }
 
-type addRequestType struct {
-	URL        *url.URL
-	Method     string
-	Header     http.Header
-	RemoteAddr string
-	RequestURI string
-	Host       string
-}
-
-func convertRequest(req *http.Request) addRequestType {
-	return addRequestType{
-		URL:        req.URL,
-		Method:     req.Method,
-		Header:     req.Header,
-		RemoteAddr: req.RemoteAddr,
-		RequestURI: req.RequestURI,
-		Host:       req.Host,
-	}
-}
+const (
+	RequestURL        = "requestURL"
+	RequestMethod     = "requestMethod"
+	RequestRemoteAddr = "requestRemoteAddr"
+	RequestRequestURI = "requestRequestURI"
+	RequestHost       = "requestHost"
+)
 
 func AddRequest(req *http.Request) log.Fields {
 	return log.Fields{
-		requestKey: convertRequest(req),
+		RequestURL:        req.URL.String(),
+		RequestMethod:     req.Method,
+		RequestRemoteAddr: req.RemoteAddr,
+		RequestRequestURI: req.RequestURI,
+		RequestHost:       req.Host,
 	}
 }

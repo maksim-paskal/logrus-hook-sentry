@@ -3,7 +3,7 @@ test:
 	go fmt
 	go mod tidy
 	go test -race
-	golangci-lint run --allow-parallel-runners -v --enable-all --disable exhaustivestruct,testpackage --fix
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run -v
 testScript:
 	go run ./test-script
 upgrade:

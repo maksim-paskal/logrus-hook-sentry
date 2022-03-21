@@ -19,7 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrTest error = errors.New("test error")
+var ErrTest = errors.New("test error")
 
 func main() {
 	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{

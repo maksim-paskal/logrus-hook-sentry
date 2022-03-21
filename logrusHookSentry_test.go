@@ -10,19 +10,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package logrushooksentry
+package logrushooksentry_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"testing"
 
+	logrushooksentry "github.com/maksim-paskal/logrus-hook-sentry"
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrTest error = errors.New("test error")
+var ErrTest = errors.New("test error")
 
 func TestHook(t *testing.T) {
 	t.Parallel()
@@ -31,7 +31,7 @@ func TestHook(t *testing.T) {
 
 	mapTags["test"] = "value"
 
-	hook, err := NewHook(Options{
+	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{
 		Release: "test",
 		Tags:    mapTags,
 	})
@@ -56,11 +56,11 @@ func TestRequestJson(t *testing.T) {
 	req, _ := http.NewRequestWithContext(context.TODO(), "POST", "http://127.0.0.1?test=value", nil)
 	req.Header.Add("key", "value")
 
-	logResult := convertRequest(req)
+	logData := logrushooksentry.AddRequest(req)
 
-	if _, err := json.Marshal(logResult); err != nil {
-		t.Fatal(err)
+	if logData[logrushooksentry.RequestMethod] != "POST" {
+		t.Fatal("requestType has wrong attributes")
 	}
 
-	log.WithFields(AddRequest(req)).Info("ss")
+	log.WithFields(logData).Info("test")
 }

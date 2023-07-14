@@ -7,3 +7,5 @@ linters:
   disable:
   - gochecknoglobals
   - exhaustivestruct
+  - exhaustruct
+  - depguard

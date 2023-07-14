@@ -13,6 +13,7 @@ limitations under the License.
 package logrushooksentry
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -35,7 +36,7 @@ type Options struct {
 }
 
 // create new Hook.
-func NewHook(options Options) (*Hook, error) {
+func NewHook(ctx context.Context, options Options) (*Hook, error) {
 	hook := Hook{
 		options: options,
 	}
@@ -70,14 +71,17 @@ func NewHook(options Options) (*Hook, error) {
 		}
 	}
 
-	return &hook, nil
-}
+	go func() {
+		<-ctx.Done()
 
-// Graceful stop sentry.
-func (hook *Hook) Stop() {
-	sentry.Flush(hook.options.FlushDuration)
-	sentry.Recover()
-	time.Sleep(hook.options.FlushDuration)
+		log.Info("Sentry flush")
+
+		sentry.Flush(hook.options.FlushDuration)
+		sentry.Recover()
+		time.Sleep(hook.options.FlushDuration)
+	}()
+
+	return &hook, nil
 }
 
 // func to interface log.Hook.Levels.
@@ -131,10 +135,6 @@ func (hook *Hook) Fire(entry *log.Entry) error { //nolint: cyclop
 		localHub.CaptureException(err)
 	} else {
 		localHub.CaptureMessage(entry.Message)
-	}
-
-	if entry.Level <= log.FatalLevel {
-		hook.Stop()
 	}
 
 	return nil

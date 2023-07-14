@@ -13,7 +13,9 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	logrushooksentry "github.com/maksim-paskal/logrus-hook-sentry"
 	log "github.com/sirupsen/logrus"
@@ -22,18 +24,23 @@ import (
 var ErrTest = errors.New("test error")
 
 func main() {
-	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
 		Release: "test",
 	})
 	if err != nil {
 		log.WithError(err).Fatal()
 	}
 
-	defer hook.Stop()
-
 	log.AddHook(hook)
 
 	log.Info("test info")
 	log.Warn(ErrTest)
 	log.WithError(ErrTest).Error("some message")
+
+	cancel()
+
+	time.Sleep(time.Second)
 }

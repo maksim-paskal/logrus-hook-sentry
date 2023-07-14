@@ -22,6 +22,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ctx = context.Background()
+
 var ErrTest = errors.New("test error")
 
 func TestHook(t *testing.T) {
@@ -31,15 +33,13 @@ func TestHook(t *testing.T) {
 
 	mapTags["test"] = "value"
 
-	hook, err := logrushooksentry.NewHook(logrushooksentry.Options{
+	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
 		Release: "test",
 		Tags:    mapTags,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	defer hook.Stop()
 
 	log.AddHook(hook)
 
@@ -53,12 +53,12 @@ func TestRequestJson(t *testing.T) {
 
 	log.SetFormatter(&log.JSONFormatter{})
 
-	req, _ := http.NewRequestWithContext(context.TODO(), "POST", "http://127.0.0.1?test=value", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, "http://127.0.0.1?test=value", nil)
 	req.Header.Add("key", "value")
 
 	logData := logrushooksentry.AddRequest(req)
 
-	if logData[logrushooksentry.RequestMethod] != "POST" {
+	if logData[logrushooksentry.RequestMethod] != http.MethodPost {
 		t.Fatal("requestType has wrong attributes")
 	}
 

@@ -29,10 +29,12 @@ type Hook struct {
 
 type Options struct {
 	SentryDSN     string
+	Environment   string
 	Release       string
 	LogLevels     []log.Level
 	Tags          map[string]string
 	FlushDuration time.Duration
+	Debug         bool
 }
 
 // create new Hook.
@@ -45,10 +47,23 @@ func NewHook(ctx context.Context, options Options) (*Hook, error) {
 		hook.options.FlushDuration = time.Second
 	}
 
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn:     options.SentryDSN,
+	sentryConfig := sentry.ClientOptions{
 		Release: options.Release,
-	})
+	}
+
+	if len(options.SentryDSN) > 0 {
+		sentryConfig.Dsn = options.SentryDSN
+	}
+
+	if len(options.Environment) > 0 {
+		sentryConfig.Environment = options.Environment
+	}
+
+	if options.Debug {
+		sentryConfig.Debug = options.Debug
+	}
+
+	err := sentry.Init(sentryConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "Sentry init failed")
 	}
@@ -73,8 +88,6 @@ func NewHook(ctx context.Context, options Options) (*Hook, error) {
 
 	go func() {
 		<-ctx.Done()
-
-		log.Info("Sentry flush")
 
 		sentry.Flush(hook.options.FlushDuration)
 		sentry.Recover()

@@ -36,6 +36,7 @@ func TestHook(t *testing.T) {
 	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
 		Release: "test",
 		Tags:    mapTags,
+		Debug:   true,
 	})
 	if err != nil {
 		t.Fatal(err)

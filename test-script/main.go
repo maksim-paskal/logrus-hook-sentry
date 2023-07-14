@@ -23,12 +23,16 @@ import (
 
 var ErrTest = errors.New("test error")
 
+const waitTime = time.Second * 3
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	hook, err := logrushooksentry.NewHook(ctx, logrushooksentry.Options{
-		Release: "test",
+		Release:       "test-application",
+		Debug:         true,
+		FlushDuration: waitTime,
 	})
 	if err != nil {
 		log.WithError(err).Fatal()
@@ -42,5 +46,6 @@ func main() {
 
 	cancel()
 
-	time.Sleep(time.Second)
+	log.Infof("Wait %s for flush", waitTime.String())
+	time.Sleep(waitTime)
 }
